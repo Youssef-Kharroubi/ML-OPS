@@ -7,3 +7,7 @@ mlflow
 fastapi
 uvicorn
 joblib
+seaborn
+imbalanced-learn
+argparse
+os-sys
