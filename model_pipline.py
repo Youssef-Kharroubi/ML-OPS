@@ -16,17 +16,27 @@ def load_data(filepath):
     """Load dataset from a CSV file."""
     return pd.read_csv(filepath)
 
-def prepare_data(df):
+def prepare_data(df, target_column='Churn'):
     """Perform data cleaning, encoding, and scaling."""
     label_encoders = {}
-    for column in df.select_dtypes(include=['object']).columns:
-        le = LabelEncoder()
-        df[column] = le.fit_transform(df[column])
-        label_encoders[column] = le
 
+    # Encode categorical variables except target
+    for column in df.select_dtypes(include=['object']).columns:
+        if column != target_column:  # Avoid encoding the target column
+            le = LabelEncoder()
+            df[column] = le.fit_transform(df[column])
+            label_encoders[column] = le
+
+    # Separate features and target before scaling
+    X = df.drop(columns=[target_column])
+    y = df[target_column]
+
+    # Standardize features (not target)
     scaler = StandardScaler()
-    df_scaled = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
-    return df_scaled, label_encoders, scaler
+    X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
+
+    return X_scaled, y.astype(int), label_encoders, scaler  # Convert y to int
+
 
 def balance_data(X, y, method='SMOTE'):
     """Balance dataset using oversampling or undersampling."""

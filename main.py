@@ -20,31 +20,27 @@ def main(args):
     df_train = load_data(train_path)
     df_test = load_data(test_path)
 
-    # Prepare data (scaling and encoding)
-    df_train_scaled, encoders, scaler = prepare_data(df_train)
-    df_test_scaled, _, _ = prepare_data(df_test)
 
     # Split into features and target
-    X_train = df_train_scaled.drop(columns=['Churn'])
-    y_train = df_train_scaled['Churn']
-    X_test = df_test_scaled.drop(columns=['Churn'])
-    y_test = df_test_scaled['Churn']
+    X_train = df_train.drop(columns=['Churn'])
+    y_train = df_train['Churn']
+    X_test = df_test.drop(columns=['Churn'])
+    y_test = df_test['Churn']
+
+    # Prepare data (scaling and encoding)
+    X_train, y_train, encoders, scaler = prepare_data(df_train, target_column='Churn')
+    X_test, y_test, _, _ = prepare_data(df_test, target_column='Churn')
 
     # Balance the data (handle class imbalance)
-    X_train_res, y_train_res = balance_data(X_train, y_train)
+    X_train_res, y_train_res = balance_data(X_train, y_train.astype(int))  # Ensure y_train is categorical
 
-    # Load or train the model
-    if args.load_model:
-        if os.path.exists(args.load_model):
-            model = load_model(args.load_model)
-        else:
-            print(f"Error: Model file '{args.load_model}' not found.")
-            return
+    
+    if args.load_model and os.path.exists(args.load_model):
+        model = load_model(args.load_model)
     else:
         model = train_model(X_train_res, y_train_res, model_type=args.model)
         save_model(model, args.save_model)
-
-    # Evaluate the model
+    
     report, accuracy = evaluate_model(model, X_test, y_test)
     print("Model Accuracy:", accuracy)
     print("Classification Report:\n", report)
