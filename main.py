@@ -65,7 +65,7 @@ if __name__ == "__main__":
     eval_parser = subparsers.add_parser("test", help="Evaluate a trained model")
     eval_parser.add_argument("--test_data", type=str, required=True, help="Testing dataset filename (inside data/)")
     eval_parser.add_argument("--load_model", type=str, required=True, help="Path to load a pre-trained model")
-    eval_parser.set_defaults(func=evaluate)
+    eval_parser.set_defaults(func=test)
 
     args = parser.parse_args()
     args.func(args)
