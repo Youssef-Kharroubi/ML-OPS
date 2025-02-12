@@ -62,7 +62,7 @@ if __name__ == "__main__":
     train_parser.set_defaults(func=train)
 
     # Evaluate command
-    eval_parser = subparsers.add_parser("evaluate", help="Evaluate a trained model")
+    eval_parser = subparsers.add_parser("test", help="Evaluate a trained model")
     eval_parser.add_argument("--test_data", type=str, required=True, help="Testing dataset filename (inside data/)")
     eval_parser.add_argument("--load_model", type=str, required=True, help="Path to load a pre-trained model")
     eval_parser.set_defaults(func=evaluate)
