@@ -54,7 +54,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train or Evaluate a Machine Learning Model")
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # Train command
+    
     train_parser = subparsers.add_parser("train", help="Train a model")
     train_parser.add_argument("--train_data", type=str, required=True, help="Training dataset filename (inside data/)")
     train_parser.add_argument("--model", type=str, choices=['RF', 'KNN', 'DT'], default='RF', help="Type of model to train")
