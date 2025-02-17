@@ -10,7 +10,7 @@ def train(args):
         print(f"Error: Training data file '{train_path}' not found.")
         return
 
-    # Load and prepare training data
+   
     df_train = load_data(train_path)
     X_train, y_train, encoders, scaler = prepare_data(df_train)
 
