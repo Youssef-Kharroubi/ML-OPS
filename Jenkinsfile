@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'youva1/my-ml-app'  
-            args '-v $WORKSPACE:/app -w /app'         
-        }
-    }
+    agent any  // Use a generic agent instead of docker agent
 
     environment {
         PYTHON = 'python3'
@@ -12,10 +7,22 @@ pipeline {
     }
 
     stages {
+        stage('Pull Docker Image') {
+            steps {
+                script {
+                    def myApp = docker.image('youva1/my-ml-app')
+                    myApp.pull() // Pull latest image
+                }
+            }
+        }
+
         stage('Train Model') {
             steps {
                 script {
-                    sh '${PYTHON} main.py train --train_data churn-bigml-80.csv --model ${MODEL} --save_model models/${MODEL}.pkl'
+                    def myApp = docker.image('youva1/my-ml-app')
+                    myApp.inside('-v $WORKSPACE:/app -w /app') {
+                        sh '${PYTHON} main.py train --train_data churn-bigml-80.csv --model ${MODEL} --save_model models/${MODEL}.pkl'
+                    }
                 }
             }
         }
@@ -23,7 +30,10 @@ pipeline {
         stage('Test Model') {
             steps {
                 script {
-                    sh '${PYTHON} main.py test --test_data churn-bigml-20.csv --load_model models/${MODEL}.pkl'
+                    def myApp = docker.image('youva1/my-ml-app')
+                    myApp.inside('-v $WORKSPACE:/app -w /app') {
+                        sh '${PYTHON} main.py test --test_data churn-bigml-20.csv --load_model models/${MODEL}.pkl'
+                    }
                 }
             }
         }
@@ -31,7 +41,10 @@ pipeline {
         stage('Run Model') {
             steps {
                 script {
-                    sh '${PYTHON} main.py --train_data churn-bigml-80.csv --test_data churn-bigml-20.csv --model ${MODEL}'
+                    def myApp = docker.image('youva1/my-ml-app')
+                    myApp.inside('-v $WORKSPACE:/app -w /app') {
+                        sh '${PYTHON} main.py --train_data churn-bigml-80.csv --test_data churn-bigml-20.csv --model ${MODEL}'
+                    }
                 }
             }
         }
