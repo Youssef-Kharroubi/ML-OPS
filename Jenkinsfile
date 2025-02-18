@@ -14,6 +14,7 @@ pipeline {
                     sh 'docker --version' 
                 }
             }
+        }
         stage('Pull Docker Image') {
             steps {
                 script {
