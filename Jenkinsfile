@@ -1,21 +1,17 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'youva1/my-ml-app'  
+            args '-v $WORKSPACE:/app -w /app'         
+        }
+    }
 
     environment {
         PYTHON = 'python3'
-        PIP = 'pip3'
         MODEL = 'default_model'
     }
 
     stages {
-        stage('Setup') {
-            steps {
-                script {
-                    sh '${PIP} install -r requirements.txt'
-                }
-            }
-        }
-
         stage('Train Model') {
             steps {
                 script {
