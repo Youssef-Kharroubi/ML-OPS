@@ -1,4 +1,5 @@
 pipeline {
+    
     agent any  // Use a generic agent instead of docker agent
 
     environment {
@@ -7,6 +8,12 @@ pipeline {
     }
 
     stages {
+        stage('Verify Docker') {
+            steps {
+                script {
+                    sh 'docker --version' 
+                }
+            }
         stage('Pull Docker Image') {
             steps {
                 script {
