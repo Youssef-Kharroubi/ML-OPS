@@ -18,6 +18,6 @@ run_command(f"{PYTHON} main.py train --train_data churn-bigml-80.csv --model {MO
 run_command(f"{PYTHON} main.py test --test_data churn-bigml-20.csv --load_model models/{MODEL}.pkl")
 
 # Run predictions
-run_command(f"{PYTHON} main.py --train_data churn-bigml-80.csv --test_data churn-bigml-20.csv --model {MODEL}")
+#run_command(f"{PYTHON} main.py --train_data churn-bigml-80.csv --test_data churn-bigml-20.csv --model {MODEL}")
 
 print("Pipeline executed successfully!")
