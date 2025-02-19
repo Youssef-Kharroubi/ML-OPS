@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  model_pipeline:
+    build:
+      context: ./modelPipeline
+    container_name: model_pipeline
+    volumes:
+      - ./modelPipeline/models:/app/models  # Make sure the model is shared
+    ports:
+      - "5001:5001"  # Adjust the port as needed
+    networks:
+      - ml_network
+  
+  flask_api:
+    build:
+      context: ./flaskApi
+    container_name: flask_api
+    ports:
+      - "5000:5000"
+    depends_on:
+      - model_pipeline
+    networks:
+      - ml_network
+
+networks:
+  ml_network:
+    driver: bridge

@@ -21,6 +21,6 @@ run_command(f"{PYTHON} main.py train --train_data churn-bigml-80.csv --model {MO
 run_command(f"{PYTHON} main.py test --test_data churn-bigml-20.csv --load_model models/{MODEL}.pkl")
 
 # Run predictions (uncomment when the predict function is ready)
-run_command(f"{PYTHON} main.py predict --load_model models/{MODEL}.pkl --test_data churn-bigml-20.csv")
+# run_command(f"{PYTHON} main.py predict --load_model models/{MODEL}.pkl --test_data churn-bigml-20.csv")
 
 print("✅ Pipeline executed successfully!")

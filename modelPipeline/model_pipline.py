@@ -15,6 +15,9 @@ from imblearn.under_sampling import RandomUnderSampler
 def load_data(filepath):
     """Load dataset from a CSV file."""
     return pd.read_csv(filepath)
+from sklearn.preprocessing import LabelEncoder, StandardScaler
+import pandas as pd
+
 
 def prepare_data(df, target_column='Churn'):
     """Perform data cleaning, encoding, and scaling."""
@@ -36,6 +39,9 @@ def prepare_data(df, target_column='Churn'):
     X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
 
     return X_scaled, y.astype(int), label_encoders, scaler  # Convert y to int
+ 
+
+
 
 
 def balance_data(X, y, method='SMOTE'):
@@ -81,8 +87,4 @@ def load_model(filename):
     """Load saved model using joblib."""
     return joblib.load(filename)
 
-def predict(model, input_data):
-    """Predict using trained model."""
-    X_processed, _, _ = prepare_data(input_data)
-    predictions = model.predict(X_processed)
-    return predictions
+

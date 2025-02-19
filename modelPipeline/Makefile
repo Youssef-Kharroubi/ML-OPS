@@ -8,7 +8,7 @@ main:
 train:
 	$(PYTHON) main.py train --train_data churn-bigml-80.csv --model $(MODEL) --save_model models/$(MODEL).pkl
 test:
-	$(PYTHON) main.py test --test_data churn-bigml-20.csv --model $(MODEL) --load_model models/$(MODEL).pkl
+	$(PYTHON) main.py test --test_data churn-bigml-20.csv --load_model models/$(MODEL).pkl
 clean:
 	rm -rf __pycache__ logs/*.log
 help:

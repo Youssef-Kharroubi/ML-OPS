@@ -2,25 +2,34 @@ import argparse
 import os
 import pandas as pd
 from model_pipline import (
-    load_data, prepare_data, balance_data, train_model, evaluate_model, save_model, load_model, predict
+    load_data, prepare_data, balance_data, train_model, evaluate_model, save_model, load_model
 )
 
 
 def train(args):
     train_path = os.path.join("data", args.train_data)
+    
     if not os.path.exists(train_path):
         print(f"Error: Training data file '{train_path}' not found.")
         return
 
+    model_path = os.path.abspath(args.save_model)
+    print(f"🔍 Checking if model exists at: {model_path}")
+
+    if os.path.exists(model_path):
+        print("⚠️ Model file already exists.")
+        overwrite = input("Overwrite? (y/n): ").strip().lower()
+        if overwrite != 'y':
+            print("❌ Training aborted. Model not overwritten.")
+            return
+
     df_train = load_data(train_path)
     X_train, y_train, encoders, scaler = prepare_data(df_train)
-
     X_train_res, y_train_res = balance_data(X_train, y_train)
 
     model = train_model(X_train_res, y_train_res, model_type=args.model)
-
-    save_model((model, encoders, scaler), args.save_model)
-    print(f"✅ Model trained and saved at: {args.save_model}")
+    save_model((model, encoders, scaler), model_path)
+    print(f"✅ Model trained and saved at: {model_path}")
 
 
 def test(args):
@@ -46,30 +55,6 @@ def test(args):
     print("Classification Report:\n", report)
 
 
-def predict(args):
-    if not os.path.exists(args.load_model):
-        print(f"Error: Model file '{args.load_model}' not found.")
-        return
-
-    # Load model
-    model = load_model(args.load_model)
-    print(f"Loaded model from: {args.load_model}")
-
-    # Load and prepare test data
-    test_path = os.path.join("data", args.test_data)
-    if not os.path.exists(test_path):
-        print(f"Error: Testing data file '{test_path}' not found.")
-        return
-
-    df_test = load_data(test_path)
-    X_test, _, _, _ = prepare_data(df_test)
-
-    # Generate predictions
-    predictions = predict(model, X_test)
-    
-    print("\n🔹 Predictions:")
-    print(predictions)
-
 
 
 if __name__ == "__main__":
@@ -86,12 +71,6 @@ if __name__ == "__main__":
     eval_parser.add_argument("--test_data", type=str, required=True, help="Testing dataset filename (inside data/)")
     eval_parser.add_argument("--load_model", type=str, required=True, help="Path to load a pre-trained model")
     eval_parser.set_defaults(func=test)
-
-    predict_parser = subparsers.add_parser("predict", help="Make predictions using a trained model")
-    predict_parser.add_argument("--test_data", type=str, required=True, help="Testing dataset filename (inside data/)")
-    predict_parser.add_argument("--load_model", type=str, required=True, help="Path to load a pre-trained model")
-    predict_parser.set_defaults(func=predict)
-
 
     args = parser.parse_args()
     args.func(args)
