@@ -81,3 +81,8 @@ def load_model(filename):
     """Load saved model using joblib."""
     return joblib.load(filename)
 
+def predict(model, input_data, encoders, scaler):
+    """Predict using trained model."""
+    X_processed, _, _ = prepare_data(input_data, encoders=encoders, scaler=scaler, train_mode=False)
+    predictions = model.predict(X_processed)
+    return predictions
