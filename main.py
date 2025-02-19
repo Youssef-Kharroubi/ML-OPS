@@ -37,7 +37,7 @@ def test(args):
     model, encoders, scaler = model_data
 
     df_test = load_data(test_path)
-    X_test, y_test, _, _ = prepare_data(df_test, scaler=scaler, train_mode=False)
+    X_test, y_test, _, _ = prepare_data(df_test)
 
     report, accuracy = evaluate_model(model, X_test, y_test)
 
