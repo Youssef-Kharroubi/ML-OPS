@@ -1,10 +1,11 @@
 pipeline {
-    
-    agent any  // Use a generic agent instead of docker agent
+    agent any  
 
     environment {
         PYTHON = 'python3'
-        MODEL = 'default_model'
+        MODEL = 'RF'
+        MPLCONFIGDIR = '/tmp'
+        FONTCONFIG_PATH = '/tmp/.fontconfig' 
     }
 
     stages {
@@ -15,6 +16,7 @@ pipeline {
                 }
             }
         }
+        
         stage('Pull Docker Image') {
             steps {
                 script {
@@ -28,7 +30,7 @@ pipeline {
             steps {
                 script {
                     def myApp = docker.image('youva1/my-ml-app')
-                    myApp.inside('-v $WORKSPACE:/app -w /app') {
+                    myApp.inside('-v $WORKSPACE:/app -w /app -e MPLCONFIGDIR=$MPLCONFIGDIR -e FONTCONFIG_PATH=$FONTCONFIG_PATH') {
                         sh '${PYTHON} main.py train --train_data churn-bigml-80.csv --model ${MODEL} --save_model models/${MODEL}.pkl'
                     }
                 }
@@ -39,7 +41,7 @@ pipeline {
             steps {
                 script {
                     def myApp = docker.image('youva1/my-ml-app')
-                    myApp.inside('-v $WORKSPACE:/app -w /app') {
+                    myApp.inside('-v $WORKSPACE:/app -w /app -e MPLCONFIGDIR=$MPLCONFIGDIR -e FONTCONFIG_PATH=$FONTCONFIG_PATH') {
                         sh '${PYTHON} main.py test --test_data churn-bigml-20.csv --load_model models/${MODEL}.pkl'
                     }
                 }
@@ -50,7 +52,7 @@ pipeline {
             steps {
                 script {
                     def myApp = docker.image('youva1/my-ml-app')
-                    myApp.inside('-v $WORKSPACE:/app -w /app') {
+                    myApp.inside('-v $WORKSPACE:/app -w /app -e MPLCONFIGDIR=$MPLCONFIGDIR -e FONTCONFIG_PATH=$FONTCONFIG_PATH') {
                         sh '${PYTHON} main.py --train_data churn-bigml-80.csv --test_data churn-bigml-20.csv --model ${MODEL}'
                     }
                 }
