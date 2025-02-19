@@ -15,7 +15,7 @@ pipeline {
                         -e PYTHON=${PYTHON} \
                         -e MODEL=${MODEL} \
                         -v $WORKSPACE:/app \
-                        youva1/my-ml-app
+                        youva1/my-ml-app python3 run_pipeline.py
                     '''
                 }
             }
