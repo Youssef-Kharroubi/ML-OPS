@@ -1,7 +1,7 @@
 import argparse
 import os
 import pandas as pd
-from model_pipeline import (
+from model_pipline import (
     load_data, prepare_data, balance_data, train_model, evaluate_model, save_model, load_model, predict
 )
 
