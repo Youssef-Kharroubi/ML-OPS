@@ -1,33 +1,21 @@
 from flask import Flask, request, jsonify
-import joblib
-import os
-import pandas as pd
+import pickle
 
 app = Flask(__name__)
 
 # Load the model
-MODEL_PATH = os.getenv("MODEL_PATH", "/models/churn_model.pkl")
+with open('/app/model.pkl', 'rb') as model_file:
+    model = pickle.load(model_file)
 
-if os.path.exists(MODEL_PATH):
-    model = joblib.load(MODEL_PATH)
-    print("✅ Model loaded successfully!")
-else:
-    print(f"❌ Model not found at {MODEL_PATH}")
-
-
-@app.route("/predict", methods=["POST"])
+@app.route('/predict', methods=['POST'])
 def predict():
     try:
-        data = request.json
-        df = pd.DataFrame([data])  # Convert input to DataFrame
-        
-        prediction = model.predict(df)[0]  # Make prediction
-        result = {"churn": int(prediction)}
-        return jsonify(result)
-
+        features = request.json.get('features')
+        prediction = model.predict([features])
+        return jsonify({'prediction': prediction.tolist()})
     except Exception as e:
-        return jsonify({"error": str(e)}), 400
+        return jsonify({'error': str(e)})
 
+if __name__ == '__main__':
+    app.run(debug=True, host='0.0.0.0', port=5000)
 
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
