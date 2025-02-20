@@ -1,28 +1,19 @@
 version: '3.8'
 
 services:
-  model_pipeline:
-    build:
-      context: ./modelPipeline
-    container_name: model_pipeline
-    volumes:
-      - ./modelPipeline/models:/app/models  # Make sure the model is shared
-    ports:
-      - "5001:5001"  # Adjust the port as needed
-    networks:
-      - ml_network
-  
-  flask_api:
-    build:
-      context: ./flaskApi
-    container_name: flask_api
+  app:
+    image: youva1/my-ml-app
     ports:
       - "5000:5000"
+    command: >
+      sh -c "while [ ! -f models/RF.pkl ]; do echo 'Waiting for model...'; sleep 5; done; python3 main.py serve --load_model models/RF.pkl --port 5000"
     depends_on:
-      - model_pipeline
-    networks:
-      - ml_network
+      - pipeline
+    volumes:
+      - ./models:/app/models  
 
-networks:
-  ml_network:
-    driver: bridge
+  pipeline:
+    image: youva1/my-ml-app
+    command: ["python3", "run_pipeline.py"]
+    volumes:
+      - ./models:/app/models  # Ensure the model is saved here

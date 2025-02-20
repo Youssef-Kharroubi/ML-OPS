@@ -101,19 +101,8 @@ def train(args):
     """Train the model"""
     train_path = os.path.join("data", args.train_data)
     
-    if not os.path.exists(train_path):
-        print(f"Error: Training data file '{train_path}' not found.")
-        return
-
     model_path = os.path.abspath(args.save_model)
     print(f"🔍 Checking if model exists at: {model_path}")
-
-    if os.path.exists(model_path):
-        print("⚠️ Model file already exists.")
-        overwrite = input("Overwrite? (y/n): ").strip().lower()
-        if overwrite != 'y':
-            print("❌ Training aborted. Model not overwritten.")
-            return
 
     df_train = load_data(train_path)
     X_train, y_train, encoders, scaler = prepare_data(df_train)
