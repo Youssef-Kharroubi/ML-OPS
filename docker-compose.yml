@@ -1,19 +1,25 @@
 version: '3.8'
-
 services:
   app:
-    image: youva1/my-ml-app
+    build:
+      context: ./modelPipeline
+      dockerfile: Dockerfile.app
     ports:
       - "5000:5000"
     command: >
-      sh -c "while [ ! -f models/RF.pkl ]; do echo 'Waiting for model...'; sleep 5; done; python3 main.py serve --load_model models/RF.pkl --port 5000"
+      sh -c "while [ ! -f models/RF.pkl ]; do echo 'Waiting for model...'; sleep 5; done; python3 main.py --load_model models/RF.pkl --port 5000"
     depends_on:
       - pipeline
     volumes:
-      - ./models:/app/models  
+      - ./models:/app/models
 
   pipeline:
-    image: youva1/my-ml-app
-    command: ["python3", "run_pipeline.py"]
+    build:
+      context: ./modelPipeline
+      dockerfile: Dockerfile.pipeline
+    ports:
+      - "5001:5001"
     volumes:
-      - ./models:/app/models  # Ensure the model is saved here
+      - ./modelPipeline/data:/app/data
+      - ./models:/app/models
+      - ./mlruns:/app/mlruns
