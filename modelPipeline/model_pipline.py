@@ -15,17 +15,13 @@ from imblearn.under_sampling import RandomUnderSampler
 def load_data(filepath):
     """Load dataset from a CSV file."""
     return pd.read_csv(filepath)
-from sklearn.preprocessing import LabelEncoder, StandardScaler
-import pandas as pd
-
 
 def prepare_data(df, target_column='Churn'):
     """Perform data cleaning, encoding, and scaling."""
     label_encoders = {}
-
     # Encode categorical variables except target
     for column in df.select_dtypes(include=['object']).columns:
-        if column != target_column:  # Avoid encoding the target column
+        if column != target_column:
             le = LabelEncoder()
             df[column] = le.fit_transform(df[column])
             label_encoders[column] = le
@@ -39,10 +35,6 @@ def prepare_data(df, target_column='Churn'):
     X_scaled = pd.DataFrame(scaler.fit_transform(X), columns=X.columns)
 
     return X_scaled, y.astype(int), label_encoders, scaler  # Convert y to int
- 
-
-
-
 
 def balance_data(X, y, method='SMOTE'):
     """Balance dataset using oversampling or undersampling."""
@@ -68,8 +60,8 @@ def train_model(X_train, y_train, model_type='RF'):
         model = DecisionTreeClassifier()
     else:
         raise ValueError("Invalid model type")
-
-    model.fit(X_train, y_train)
+    
+    model.fit(X_train, y_train)  # Fit first, log later in run_pipeline.py
     return model
 
 def evaluate_model(model, X_test, y_test):
@@ -86,5 +78,3 @@ def save_model(model, filename):
 def load_model(filename):
     """Load saved model using joblib."""
     return joblib.load(filename)
-
-

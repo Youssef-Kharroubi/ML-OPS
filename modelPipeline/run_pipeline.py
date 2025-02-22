@@ -1,30 +1,145 @@
 import os
 import subprocess
+import argparse
+import pandas as pd
+import numpy as np
+import mlflow
+import mlflow.sklearn
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.metrics import (
+    accuracy_score, precision_score, recall_score, f1_score, roc_auc_score,
+    roc_curve, confusion_matrix
+)
+from model_pipline import (
+    load_data, prepare_data, balance_data, train_model, evaluate_model, save_model , load_model
+)
 
-def run_command(command):
-    result = subprocess.run(command, shell=True, check=True)
-    if result.returncode != 0:
-        print(f"Error: {command} failed")
+def plot_roc_curve(y_true, y_pred_proba, title, filename):
+    """Generate and save ROC curve plot."""
+    fpr, tpr, _ = roc_curve(y_true, y_pred_proba)
+    auc_score = roc_auc_score(y_true, y_pred_proba)
+    plt.figure()
+    plt.plot(fpr, tpr, label=f"ROC curve (AUC = {auc_score:.2f})")
+    plt.plot([0, 1], [0, 1], 'k--', label="Random Guess")
+    plt.xlabel("False Positive Rate")
+    plt.ylabel("True Positive Rate")
+    plt.title(title)
+    plt.legend(loc="best")
+    plt.savefig(filename)
+    plt.close()
+    return auc_score
+
+def plot_confusion_matrix(y_true, y_pred, title, filename):
+    """Generate and save confusion matrix heatmap."""
+    cm = confusion_matrix(y_true, y_pred)
+    plt.figure()
+    sns.heatmap(cm, annot=True, fmt="d", cmap="Blues")
+    plt.title(title)
+    plt.ylabel("True Label")
+    plt.xlabel("Predicted Label")
+    plt.savefig(filename)
+    plt.close()
+
+def train(args):
+    """Train the model and log to MLflow."""
+    train_path = os.path.join("data", args.train_data)
+    model_path = os.path.abspath(args.save_model)
+    print(f"🔍 Training with data at: {train_path}")
+
+    df_train = load_data(train_path)
+    X_train, y_train, encoders, scaler = prepare_data(df_train)
+    X_train_res, y_train_res = balance_data(X_train, y_train)
+
+    mlflow.set_experiment("Churn_Prediction_Experiment")
+    with mlflow.start_run():
+        mlflow.log_param("model", args.model)
+        model = train_model(X_train_res, y_train_res, model_type=args.model)
+
+        # Training metrics
+        y_train_pred = model.predict(X_train_res)
+        y_train_pred_proba = model.predict_proba(X_train_res)[:, 1]  # Probability of positive class
+        train_accuracy = accuracy_score(y_train_res, y_train_pred)
+        train_precision = precision_score(y_train_res, y_train_pred)
+        train_recall = recall_score(y_train_res, y_train_pred)
+        train_f1 = f1_score(y_train_res, y_train_pred)
+
+        print(f"Train Accuracy: {train_accuracy:.4f}")
+        mlflow.log_metric("train_accuracy", train_accuracy)
+        mlflow.log_metric("train_precision", train_precision)
+        mlflow.log_metric("train_recall", train_recall)
+        mlflow.log_metric("train_f1", train_f1)
+
+        # ROC-AUC for training
+        train_roc_auc = plot_roc_curve(y_train_res, y_train_pred_proba, "ROC Curve - Training", "train_roc_curve.png")
+        mlflow.log_metric("train_roc_auc", train_roc_auc)
+        mlflow.log_artifact("train_roc_curve.png")
+
+        # Confusion Matrix for training
+        plot_confusion_matrix(y_train_res, y_train_pred, "Confusion Matrix - Training", "train_confusion_matrix.png")
+        mlflow.log_artifact("train_confusion_matrix.png")
+
+        # Log model with input example
+        input_example = X_train_res.iloc[:1]
+        mlflow.sklearn.log_model(model, "model", input_example=input_example)
+        print("✅ Model trained and logged to MLflow")
+
+        save_model((model, encoders, scaler), model_path)
+
+def test(args):
+    """Test the model and log to MLflow."""
+    test_path = os.path.join("data", args.test_data)
+    model_path = args.load_model
+    if not os.path.exists(test_path) or not os.path.exists(model_path):
+        print(f"Error: File not found - Test data: {test_path}, Model: {model_path}")
         exit(1)
 
-# Set environment variables (passed from Jenkins)
-PYTHON = os.getenv("PYTHON", "python3")
-MODEL = os.getenv("MODEL", "RF")
-PORT = os.getenv("PORT", "8080")  # Default to port 8080 if not specified
+    model_data = load_model(model_path)
+    model, _, _ = model_data
+    df_test = load_data(test_path)
+    X_test, y_test, _, _ = prepare_data(df_test)
 
-# Ensure required directories exist
-os.makedirs("models", exist_ok=True)
+    # Test metrics
+    y_test_pred = model.predict(X_test)
+    y_test_pred_proba = model.predict_proba(X_test)[:, 1]
+    test_accuracy = accuracy_score(y_test, y_test_pred)
+    test_precision = precision_score(y_test, y_test_pred)
+    test_recall = recall_score(y_test, y_test_pred)
+    test_f1 = f1_score(y_test, y_test_pred)
 
-# Train the model
-run_command(f"{PYTHON} main.py train --train_data churn-bigml-80.csv --model {MODEL} --save_model models/{MODEL}.pkl")
+    print(f"\n🔹 Model Evaluation Results (Test):")
+    print(f"Test Accuracy: {test_accuracy:.4f}")
+    mlflow.log_metric("test_accuracy", test_accuracy)
+    mlflow.log_metric("test_precision", test_precision)
+    mlflow.log_metric("test_recall", test_recall)
+    mlflow.log_metric("test_f1", test_f1)
 
-# Test the model
-run_command(f"{PYTHON} main.py test --test_data churn-bigml-20.csv --load_model models/{MODEL}.pkl")
+    # ROC-AUC for test
+    test_roc_auc = plot_roc_curve(y_test, y_test_pred_proba, "ROC Curve - Test", "test_roc_curve.png")
+    mlflow.log_metric("test_roc_auc", test_roc_auc)
+    mlflow.log_artifact("test_roc_curve.png")
 
-# Serve the model (new functionality added)
-run_command(f"{PYTHON} main.py serve --load_model models/{MODEL}.pkl --port {PORT}")
+    # Confusion Matrix for test
+    plot_confusion_matrix(y_test, y_test_pred, "Confusion Matrix - Test", "test_confusion_matrix.png")
+    mlflow.log_artifact("test_confusion_matrix.png")
 
-# Run predictions (uncomment when the predict function is ready)
-# run_command(f"{PYTHON} main.py predict --load_model models/{MODEL}.pkl --test_data churn-bigml-20.csv")
+if __name__ == "__main__":
+    PYTHON = os.getenv("PYTHON", "python3")
+    MODEL = os.getenv("MODEL", "RF")
 
-print("✅ Pipeline executed successfully!")
+    os.makedirs("models", exist_ok=True)
+    os.makedirs("data", exist_ok=True)  # Local only, not needed in container
+
+    parser = argparse.ArgumentParser(description="Run ML Pipeline")
+    parser.add_argument("--train_data", type=str, default="churn-bigml-80.csv", help="Training dataset filename")
+    parser.add_argument("--test_data", type=str, default="churn-bigml-20.csv", help="Testing dataset filename")
+    parser.add_argument("--model", type=str, choices=['RF', 'KNN', 'DT'], default=MODEL, help="Model type")
+    parser.add_argument("--save_model", type=str, default=f"models/{MODEL}.pkl", help="Path to save the model")
+    parser.add_argument("--load_model", type=str, default=f"models/{MODEL}.pkl", help="Path to load the model")
+    args = parser.parse_args()
+
+    train(args)
+    test(args)
+
+    print("🌐 Starting MLflow UI on port 5001")
+    subprocess.run(["mlflow", "ui", "--host", "0.0.0.0", "--port", "5001"], check=True)
