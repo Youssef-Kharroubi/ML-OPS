@@ -1,33 +1,37 @@
 pipeline {
     agent any
-
     environment {
-        PYTHON = 'python3'
-        MODEL = 'RF'
+        ACCURACY_THRESHOLD = '0.85'
+        ROC_AUC_THRESHOLD = '0.80'
     }
-
     stages {
-        stage('Run ML Pipeline in Container') {
+        stage('Checkout') {
             steps {
-                script {
-                    sh '''
-                    docker run --rm \
-                        -e PYTHON=${PYTHON} \
-                        -e MODEL=${MODEL} \
-                        -v $WORKSPACE:/app \
-                        youva1/my-ml-app python3 run_pipeline.py
-                    '''
-                }
+                git url: 'https://github.com/Youssef-Kharroubi/ML-OPS', branch: 'main'
+            }
+        }
+        stage('Build Pipeline Image') {
+            steps {
+                sh 'docker build -t ml-ops-pipeline -f modelPipeline/Dockerfile.pipeline modelPipeline/'
+            }
+        }
+        stage('Run Pipeline') {
+            steps {
+                sh '''
+                docker run --rm \
+                    -e ACCURACY_THRESHOLD=${ACCURACY_THRESHOLD} \
+                    -e ROC_AUC_THRESHOLD=${ROC_AUC_THRESHOLD} \
+                    -v $(pwd)/models:/app/models \
+                    -v $(pwd)/modelPipeline/data:/app/data \
+                    -v $(pwd)/mlruns:/app/mlruns \
+                    ml-ops-pipeline
+                '''
             }
         }
     }
-
     post {
-        success {
-            echo 'Pipeline completed successfully!'
-        }
-        failure {
-            echo 'Pipeline failed! Check the logs for errors.'
+        always {
+            echo 'Pipeline completed'
         }
     }
 }

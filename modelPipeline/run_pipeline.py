@@ -41,6 +41,39 @@ def plot_confusion_matrix(y_true, y_pred, title, filename):
     plt.savefig(filename)
     plt.close()
 
+def check_model_performance(args):
+    test_path = os.path.join("data", args.test_data)
+    model_path = args.load_model
+
+    if not os.path.exists(model_path):
+        print(f"No existing model at {model_path}. Triggering training.")
+        return False
+
+    if not os.path.exists(test_path):
+        print(f"Error: Test data not found at {test_path}")
+        exit(1)
+
+    model_data = load_model(model_path)
+    model, _, _ = model_data
+    df_test = load_data(test_path)
+    X_test, y_test, _, _ = prepare_data(df_test)
+
+    y_test_pred = model.predict(X_test)
+    y_test_pred_proba = model.predict_proba(X_test)[:, 1]
+    accuracy = accuracy_score(y_test, y_test_pred)
+    roc_auc = roc_auc_score(y_test, y_test_pred_proba)
+
+    ACCURACY_THRESHOLD = float(os.getenv("ACCURACY_THRESHOLD", 0.80))
+    ROC_AUC_THRESHOLD = float(os.getenv("ROC_AUC_THRESHOLD", 0.80))
+
+    print(f"Current Test Accuracy: {accuracy:.4f}, ROC-AUC: {roc_auc:.4f}")
+    if accuracy < ACCURACY_THRESHOLD or roc_auc < ROC_AUC_THRESHOLD:
+        print(f"Performance below thresholds (Accuracy: {ACCURACY_THRESHOLD}, ROC-AUC: {ROC_AUC_THRESHOLD}). Triggering retraining.")
+        return False
+    else:
+        print("Performance meets benchmarks. Using existing model.")
+        return True
+    
 def train(args):
     """Train the model and log to MLflow."""
     train_path = os.path.join("data", args.train_data)
@@ -138,7 +171,8 @@ if __name__ == "__main__":
     parser.add_argument("--load_model", type=str, default=f"models/{MODEL}.pkl", help="Path to load the model")
     args = parser.parse_args()
 
-    train(args)
+    if not check_model_performance(args):
+        train(args)
     test(args)
 
     print("🌐 Starting MLflow UI on port 5001")
