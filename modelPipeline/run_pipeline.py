@@ -152,33 +152,39 @@ def test(args):
     df_test = load_data(test_path)
     X_test, y_test, _, _ = prepare_data(df_test)
     mlflow.set_tracking_uri("file:///app/mlruns")
+
+
     mlflow.set_experiment("Churn_Prediction_Experiment")
+    with mlflow.start_run(run_name="Model_Test_Metrics"):
 
-    # Test metrics
-    y_test_pred = model.predict(X_test)
-    y_test_pred_proba = model.predict_proba(X_test)[:, 1]
-    test_accuracy = accuracy_score(y_test, y_test_pred)
-    test_precision = precision_score(y_test, y_test_pred)
-    test_recall = recall_score(y_test, y_test_pred)
-    test_f1 = f1_score(y_test, y_test_pred)
+        y_test_pred = model.predict(X_test)
+        y_test_pred_proba = model.predict_proba(X_test)[:, 1]
+        test_accuracy = accuracy_score(y_test, y_test_pred)
+        test_precision = precision_score(y_test, y_test_pred)
+        test_recall = recall_score(y_test, y_test_pred)
+        test_f1 = f1_score(y_test, y_test_pred)
 
-    print(f"\n🔹 Model Evaluation Results (Test):")
-    print(f"Test Accuracy: {test_accuracy:.4f}")
-    mlflow.log_metric("test_accuracy", test_accuracy)
-    mlflow.log_metric("test_precision", test_precision)
-    mlflow.log_metric("test_recall", test_recall)
-    mlflow.log_metric("test_f1", test_f1)
+        print(f"\n🔹 Model Evaluation Results (Test):")
+        print(f"Test Accuracy: {test_accuracy:.4f}")
+        mlflow.log_metric("test_accuracy", test_accuracy)
+        mlflow.log_metric("test_precision", test_precision)
+        mlflow.log_metric("test_recall", test_recall)
+        mlflow.log_metric("test_f1", test_f1)
 
-    sys_metrics = get_system_metrics()
-    mlflow.log_metrics(sys_metrics)
-    # ROC-AUC for test
-    test_roc_auc = plot_roc_curve(y_test, y_test_pred_proba, "ROC Curve - Test", "test_roc_curve.png")
-    mlflow.log_metric("test_roc_auc", test_roc_auc)
-    mlflow.log_artifact("test_roc_curve.png")
+        # ROC-AUC for test
+        test_roc_auc = plot_roc_curve(y_test, y_test_pred_proba, "ROC Curve - Test", "test_roc_curve.png")
+        mlflow.log_metric("test_roc_auc", test_roc_auc)
+        mlflow.log_artifact("test_roc_curve.png")
 
-    # Confusion Matrix for test
-    plot_confusion_matrix(y_test, y_test_pred, "Confusion Matrix - Test", "test_confusion_matrix.png")
-    mlflow.log_artifact("test_confusion_matrix.png")
+        # Confusion Matrix for test
+        plot_confusion_matrix(y_test, y_test_pred, "Confusion Matrix - Test", "test_confusion_matrix.png")
+        mlflow.log_artifact("test_confusion_matrix.png")
+
+ 
+    mlflow.set_experiment("System_Metrics_Experiment")
+    with mlflow.start_run(run_name="System_Metrics"):
+        sys_metrics = get_system_metrics()
+        mlflow.log_metrics(sys_metrics)
 
 if __name__ == "__main__":
     PYTHON = os.getenv("PYTHON", "python3")
