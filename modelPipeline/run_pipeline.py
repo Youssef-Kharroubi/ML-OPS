@@ -40,6 +40,20 @@ def plot_confusion_matrix(y_true, y_pred, title, filename):
     plt.xlabel("Predicted Label")
     plt.savefig(filename)
     plt.close()
+    
+def get_system_metrics():
+    """Collect system metrics using psutil."""
+    cpu_usage = psutil.cpu_percent(interval=1)
+    memory = psutil.virtual_memory()
+    disk = psutil.disk_usage('/')
+    metrics = {
+        "cpu_usage_percent": cpu_usage,
+        "memory_used_mb": memory.used / 1024 / 1024,
+        "memory_total_mb": memory.total / 1024 / 1024,
+        "disk_used_gb": disk.used / 1024 / 1024 / 1024,
+        "disk_total_gb": disk.total / 1024 / 1024 / 1024
+    }
+    return metrics
 
 def check_model_performance(args):
     test_path = os.path.join("data", args.test_data)
@@ -148,6 +162,8 @@ def test(args):
     mlflow.log_metric("test_precision", test_precision)
     mlflow.log_metric("test_recall", test_recall)
     mlflow.log_metric("test_f1", test_f1)
+
+    sys_metrics = get_system_metrics()
 
     # ROC-AUC for test
     test_roc_auc = plot_roc_curve(y_test, y_test_pred_proba, "ROC Curve - Test", "test_roc_curve.png")
