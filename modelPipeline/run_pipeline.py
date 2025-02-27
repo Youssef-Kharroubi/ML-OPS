@@ -129,9 +129,14 @@ def train(args):
 
         # Log model with input example
         input_example = X_train_res.iloc[:1]
-        mlflow.sklearn.log_model(model, "model", input_example=input_example)
-        print("✅ Model trained and logged to MLflow")
 
+        mlflow.sklearn.log_model(
+            sk_model=model,
+            artifact_path="model",
+            input_example=input_example,
+            registered_model_name="Churn_Prediction_Model"
+        )
+        print("✅ Model trained and logged to MLflow")
         save_model((model, encoders, scaler), model_path)
 
 def test(args):
