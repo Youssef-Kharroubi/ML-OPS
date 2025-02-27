@@ -165,7 +165,7 @@ def test(args):
     mlflow.log_metric("test_f1", test_f1)
 
     sys_metrics = get_system_metrics()
-
+    mlflow.log_metrics(sys_metrics)
     # ROC-AUC for test
     test_roc_auc = plot_roc_curve(y_test, y_test_pred_proba, "ROC Curve - Test", "test_roc_curve.png")
     mlflow.log_metric("test_roc_auc", test_roc_auc)
