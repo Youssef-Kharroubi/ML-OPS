@@ -4,6 +4,7 @@ import argparse
 import pandas as pd
 import numpy as np
 import mlflow
+import psutil
 import mlflow.sklearn
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -40,7 +41,7 @@ def plot_confusion_matrix(y_true, y_pred, title, filename):
     plt.xlabel("Predicted Label")
     plt.savefig(filename)
     plt.close()
-    
+
 def get_system_metrics():
     """Collect system metrics using psutil."""
     cpu_usage = psutil.cpu_percent(interval=1)
