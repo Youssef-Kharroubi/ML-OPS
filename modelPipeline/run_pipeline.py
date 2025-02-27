@@ -131,7 +131,8 @@ def test(args):
     model, _, _ = model_data
     df_test = load_data(test_path)
     X_test, y_test, _, _ = prepare_data(df_test)
-
+    mlflow.set_experiment("Churn_Prediction_Experiment")
+    
     # Test metrics
     y_test_pred = model.predict(X_test)
     y_test_pred_proba = model.predict_proba(X_test)[:, 1]
