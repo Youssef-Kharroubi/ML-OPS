@@ -156,7 +156,6 @@ def test(args):
 
     mlflow.set_experiment("Churn_Prediction_Experiment")
     with mlflow.start_run(run_name="Model_Test_Metrics"):
-
         y_test_pred = model.predict(X_test)
         y_test_pred_proba = model.predict_proba(X_test)[:, 1]
         test_accuracy = accuracy_score(y_test, y_test_pred)
