@@ -98,7 +98,7 @@ def train(args):
     df_train = load_data(train_path)
     X_train, y_train, encoders, scaler = prepare_data(df_train)
     X_train_res, y_train_res = balance_data(X_train, y_train)
-
+    mlflow.set_tracking_uri("file:///app/mlruns")
     mlflow.set_experiment("Churn_Prediction_Experiment")
     with mlflow.start_run():
         mlflow.log_param("model", args.model)
@@ -203,6 +203,3 @@ if __name__ == "__main__":
     if not check_model_performance(args):
         train(args)
     test(args)
-
-    print("🌐 Starting MLflow UI on port 5001")
-    subprocess.run(["mlflow", "ui", "--host", "0.0.0.0", "--port", "5001"], check=True)

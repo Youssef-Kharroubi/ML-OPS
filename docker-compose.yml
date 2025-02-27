@@ -12,14 +12,13 @@ services:
       - pipeline
     volumes:
       - ./models:/app/models
-
-  pipeline:
-    build:
-      context: ./modelPipeline
-      dockerfile: Dockerfile.pipeline
+  mlflow-ui:
+    image: python:3.11.5  
+    command: >
+      sh -c "pip install mlflow && mlflow ui --host 0.0.0.0 --port 5001"
     ports:
       - "5001:5001"
     volumes:
-      - ./modelPipeline/data:/app/data
-      - ./models:/app/models
       - ./mlruns:/app/mlruns
+    working_dir: /app
+    restart: unless-stopped
