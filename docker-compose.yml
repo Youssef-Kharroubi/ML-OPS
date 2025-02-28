@@ -8,12 +8,11 @@ services:
       - "5000:5000"
     command: >
       sh -c "while [ ! -f models/RF.pkl ]; do echo 'Waiting for model...'; sleep 5; done; python3 main.py --load_model models/RF.pkl --port 5000"
-    depends_on:
-      - pipeline
     volumes:
       - ./models:/app/models
+    restart: unless-stopped
   mlflow-ui:
-    image: python:3.11.5  
+    image: python:3.11.5
     command: >
       sh -c "pip install mlflow && mlflow ui --host 0.0.0.0 --port 5001"
     ports:
