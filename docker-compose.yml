@@ -10,7 +10,10 @@ services:
       sh -c "while [ ! -f models/RF.pkl ]; do echo 'Waiting for model...'; sleep 5; done; python3 main.py --load_model models/RF.pkl --port 5000"
     volumes:
       - ./models:/app/models
+    logging:
+      driver: "json-file"
     restart: unless-stopped
+
   mlflow-ui:
     image: python:3.11.5
     command: >
@@ -20,4 +23,48 @@ services:
     volumes:
       - ./mlruns:/app/mlruns
     working_dir: /app
+    logging:
+      driver: "json-file"
     restart: unless-stopped
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.12.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    logging:
+      driver: "json-file"
+    restart: unless-stopped
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.12.0
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+    logging:
+      driver: "json-file"
+    restart: unless-stopped
+
+  filebeat:
+    image: docker.elastic.co/beats/filebeat:8.12.0
+    command: filebeat -e -strict.perms=false
+    volumes:
+      - ./filebeat.yml:/usr/share/filebeat/filebeat.yml:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    depends_on:
+      - elasticsearch
+    logging:
+      driver: "json-file"
+    restart: unless-stopped
+
+volumes:
+  esdata:
