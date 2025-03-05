@@ -98,7 +98,7 @@ def train(args):
     df_train = load_data(train_path)
     X_train, y_train, encoders, scaler = prepare_data(df_train)
     X_train_res, y_train_res = balance_data(X_train, y_train)
-    mlflow.set_tracking_uri("file:///app/mlruns")
+    mlflow.set_tracking_uri("http://mlflow-ui:5001")
     mlflow.set_experiment("Churn_Prediction_Experiment")
     with mlflow.start_run():
         mlflow.log_param("model", args.model)
@@ -151,7 +151,7 @@ def test(args):
     model, _, _ = model_data
     df_test = load_data(test_path)
     X_test, y_test, _, _ = prepare_data(df_test)
-    mlflow.set_tracking_uri("file:///app/mlruns")
+    mlflow.set_tracking_uri("http://mlflow-ui:5001")
 
 
     mlflow.set_experiment("Churn_Prediction_Experiment")
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     MODEL = os.getenv("MODEL", "RF")
 
     os.makedirs("models", exist_ok=True)
-    os.makedirs("data", exist_ok=True)  # Local only, not needed in container
+    os.makedirs("data", exist_ok=True)  
 
     parser = argparse.ArgumentParser(description="Run ML Pipeline")
     parser.add_argument("--train_data", type=str, default="churn-bigml-80.csv", help="Training dataset filename")
