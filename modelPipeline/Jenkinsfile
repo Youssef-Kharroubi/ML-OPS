@@ -19,6 +19,7 @@ pipeline {
             steps {
                 sh '''
                 docker run --rm \
+                    --network=ml-ops_default \
                     -e ACCURACY_THRESHOLD=${ACCURACY_THRESHOLD} \
                     -e ROC_AUC_THRESHOLD=${ROC_AUC_THRESHOLD} \
                     -v $(pwd)/models:/app/models \
