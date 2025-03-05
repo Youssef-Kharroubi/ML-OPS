@@ -15,6 +15,10 @@ from sklearn.metrics import (
 from model_pipline import (
     load_data, prepare_data, balance_data, train_model, evaluate_model, save_model , load_model
 )
+from elasticsearch import Elasticsearch
+from datetime import datetime
+
+es = Elasticsearch("http://elasticsearch:9200")
 
 def plot_roc_curve(y_true, y_pred_proba, title, filename):
     """Generate and save ROC curve plot."""
@@ -178,12 +182,26 @@ def test(args):
         # Confusion Matrix for test
         plot_confusion_matrix(y_test, y_test_pred, "Confusion Matrix - Test", "test_confusion_matrix.png")
         mlflow.log_artifact("test_confusion_matrix.png")
+        es.index(index="ml_metrics", body={
+                "@timestamp": datetime.utcnow().isoformat(),
+                "run_id": run.info.run_id,
+                "stage": "test",
+                "model": args.model,
+                "accuracy": test_accuracy,
+                "precision": test_precision,
+                "recall": test_recall,
+                "f1_score": test_f1,
+                "roc_auc": test_roc_auc
+            })
 
  
     mlflow.set_experiment("System_Metrics_Experiment")
     with mlflow.start_run(run_name="System_Metrics"):
         sys_metrics = get_system_metrics()
         mlflow.log_metrics(sys_metrics)
+        sys_metrics["@timestamp"] = datetime.utcnow().isoformat()
+        sys_metrics["run_id"] = run.info.run_id
+        es.index(index="system_metrics", body=sys_metrics)
 
 if __name__ == "__main__":
     PYTHON = os.getenv("PYTHON", "python3")
