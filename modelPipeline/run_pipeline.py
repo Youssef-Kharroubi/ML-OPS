@@ -184,7 +184,6 @@ def test(args):
         mlflow.log_artifact("test_confusion_matrix.png")
         es.index(index="ml_metrics", body={
                 "@timestamp": datetime.utcnow().isoformat(),
-                "run_id": run.info.run_id,
                 "stage": "test",
                 "model": args.model,
                 "accuracy": test_accuracy,
@@ -200,7 +199,6 @@ def test(args):
         sys_metrics = get_system_metrics()
         mlflow.log_metrics(sys_metrics)
         sys_metrics["@timestamp"] = datetime.utcnow().isoformat()
-        sys_metrics["run_id"] = run.info.run_id
         es.index(index="system_metrics", body=sys_metrics)
 
 if __name__ == "__main__":
