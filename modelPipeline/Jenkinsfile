@@ -32,6 +32,11 @@ pipeline {
     post {
         always {
             echo 'Pipeline completed'
+            emailext (
+                subject: "Pipeline '${env.JOB_NAME}' #${env.BUILD_NUMBER} Completed",
+                body: "Pipeline '${env.JOB_NAME}' finished. Status: ${currentBuild.currentResult}. Check: ${env.BUILD_URL}",
+                to: 'youssef.kharroubi@esprit.tn'  
+            )
         }
     }
 }
